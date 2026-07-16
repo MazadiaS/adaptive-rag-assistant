@@ -76,4 +76,5 @@ uv run --with-requirements requirements.txt uvicorn app.main:app --port 7860
 - ✅ **LangGraph agent** — built and unit-tested with mock models (8/8 routing tests, no keys): `backend/tests/test_graph.py`
 - ✅ **Backend API** (FastAPI) — `/health`, `/ingest`, `/chat`; loads cleanly, Docker-ready
 - ✅ **Multimodal ingest** — PDF text + Gemini-Vision image captions → Qdrant
-- 🔜 **Frontend** (Next.js) — chat UI with live agent steps + citations
+- ✅ **Frontend** (Next.js 14) — chat UI with live agent steps + citations + upload; `next build` passes
+- ⏳ **Deploy** — needs your free accounts/keys (Qdrant, Gemini, HF, Vercel); runbook above
