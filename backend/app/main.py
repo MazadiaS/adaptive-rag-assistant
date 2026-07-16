@@ -25,14 +25,11 @@ def get_rag_app():
     """Lazily build the graph so the module imports without keys (build/test)."""
     global _rag_app
     if _rag_app is None:
-        from langchain_google_genai import ChatGoogleGenerativeAI
-
         from .graph import build_rag_app
         from .ingest import get_vectorstore
+        from .providers import get_llm
 
-        llm = ChatGoogleGenerativeAI(
-            model=config.CHAT_MODEL, google_api_key=config.GOOGLE_API_KEY, temperature=0
-        )
+        llm = get_llm(temperature=0)
         retriever = get_vectorstore().as_retriever(search_kwargs={"k": config.RETRIEVE_K})
 
         web = None

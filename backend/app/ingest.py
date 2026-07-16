@@ -5,21 +5,13 @@ Gemini Vision and indexed as text, so the RAG system can answer about pictures.
 """
 from __future__ import annotations
 
-import base64
 import os
 from typing import List
 
 from langchain_core.documents import Document
 from langchain_text_splitters import RecursiveCharacterTextSplitter
 
-from . import config
-
-
-def _embeddings():
-    from langchain_google_genai import GoogleGenerativeAIEmbeddings
-    return GoogleGenerativeAIEmbeddings(
-        model=config.EMBED_MODEL, google_api_key=config.GOOGLE_API_KEY
-    )
+from . import config, providers
 
 
 def get_vectorstore():
@@ -40,25 +32,8 @@ def get_vectorstore():
     return QdrantVectorStore(
         client=client,
         collection_name=config.QDRANT_COLLECTION,
-        embedding=_embeddings(),
+        embedding=providers.get_embeddings(),
     )
-
-
-def _caption_image(png_bytes: bytes) -> str:
-    """Describe an image with Gemini Vision so its content becomes searchable."""
-    from langchain_core.messages import HumanMessage
-    from langchain_google_genai import ChatGoogleGenerativeAI
-
-    vision = ChatGoogleGenerativeAI(
-        model=config.VISION_MODEL, google_api_key=config.GOOGLE_API_KEY, temperature=0
-    )
-    b64 = base64.b64encode(png_bytes).decode()
-    msg = HumanMessage(content=[
-        {"type": "text", "text": "Describe this image or diagram in detail for search "
-                                 "indexing: what it shows, labels, numbers, and meaning."},
-        {"type": "image_url", "image_url": f"data:image/png;base64,{b64}"},
-    ])
-    return vision.invoke([msg]).content
 
 
 def _load_pdf(path: str, caption_images: bool = True) -> List[Document]:
@@ -78,7 +53,7 @@ def _load_pdf(path: str, caption_images: bool = True) -> List[Document]:
                         pix = fitz.Pixmap(pdf, img[0])
                         if pix.n > 4:  # CMYK -> RGB
                             pix = fitz.Pixmap(fitz.csRGB, pix)
-                        caption = _caption_image(pix.tobytes("png"))
+                        caption = providers.caption_image(pix.tobytes("png"))
                         if caption:
                             docs.append(Document(
                                 page_content=f"[Image on page {page_no}] {caption}",
