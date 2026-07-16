@@ -54,7 +54,8 @@ def health():
     return {
         "status": "ok",
         "chat_model": config.CHAT_MODEL,
-        "configured": bool(config.GOOGLE_API_KEY and config.QDRANT_URL),
+        "configured": bool(config.GOOGLE_API_KEY),
+        "vector_db": "cloud" if config.QDRANT_URL else "embedded-local",
         "web_search": bool(config.TAVILY_API_KEY),
     }
 

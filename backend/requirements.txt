@@ -11,3 +11,4 @@ langchain-tavily>=0.1
 qdrant-client>=1.9
 pymupdf>=1.24
 pydantic>=2.7
+python-dotenv>=1.0

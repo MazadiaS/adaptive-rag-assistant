@@ -28,7 +28,10 @@ def get_vectorstore():
     from qdrant_client import QdrantClient
     from qdrant_client.models import Distance, VectorParams
 
-    client = QdrantClient(url=config.QDRANT_URL, api_key=config.QDRANT_API_KEY)
+    if config.QDRANT_URL:  # Qdrant Cloud / remote server
+        client = QdrantClient(url=config.QDRANT_URL, api_key=config.QDRANT_API_KEY)
+    else:                  # embedded local mode — no server, no Docker, no signup
+        client = QdrantClient(path=config.QDRANT_PATH)
     if not client.collection_exists(config.QDRANT_COLLECTION):
         client.create_collection(
             config.QDRANT_COLLECTION,

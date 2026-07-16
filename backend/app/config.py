@@ -2,6 +2,13 @@
 Hugging Face Spaces / a local .env). Nothing secret is committed."""
 import os
 
+# Load a local .env if present (harmless in production where real env vars win).
+try:
+    from dotenv import load_dotenv
+    load_dotenv()
+except Exception:
+    pass
+
 # --- models (free tier). Update the model name if Google rotates it. ---
 CHAT_MODEL = os.getenv("CHAT_MODEL", "gemini-2.5-flash")        # free Flash tier
 VISION_MODEL = os.getenv("VISION_MODEL", "gemini-2.5-flash")    # same model, multimodal
@@ -14,6 +21,8 @@ QDRANT_URL = os.getenv("QDRANT_URL")
 QDRANT_API_KEY = os.getenv("QDRANT_API_KEY")
 TAVILY_API_KEY = os.getenv("TAVILY_API_KEY")
 
+# If QDRANT_URL is empty, run Qdrant EMBEDDED (local file, no server/Docker needed).
+QDRANT_PATH = os.getenv("QDRANT_PATH", "/tmp/qdrant_local")
 QDRANT_COLLECTION = os.getenv("QDRANT_COLLECTION", "documents")
 RETRIEVE_K = int(os.getenv("RETRIEVE_K", "4"))
 CHUNK_SIZE = int(os.getenv("CHUNK_SIZE", "1000"))
