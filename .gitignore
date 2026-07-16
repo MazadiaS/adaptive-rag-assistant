@@ -1,0 +1,20 @@
+# secrets
+.env
+backend/.env
+*.env.local
+
+# python
+__pycache__/
+*.pyc
+.venv/
+.uv/
+
+# node / next
+node_modules/
+.next/
+out/
+.vercel/
+
+# misc
+.DS_Store
+/tmp/
