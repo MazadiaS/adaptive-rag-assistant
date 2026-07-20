@@ -157,22 +157,37 @@ def build_rag_app(llm, retriever, web_search_tool=None):
         )
         return "useful" if _yes(useful) else "not_useful"  # not_useful -> widen with web
 
+    def route_after_generate_docs_only(state: GraphState) -> str:
+        # document-only: never widen with the web; end instead
+        return "not_grounded" if route_after_generate(state) == "not_grounded" else "useful"
+
     # ---------------- wire the graph ----------------
+    web_enabled = web_search_tool is not None
+
     g = StateGraph(GraphState)
     g.add_node("retrieve", retrieve)
     g.add_node("grade_documents", grade_documents)
-    g.add_node("web_search", web_search)
     g.add_node("generate", generate)
-
     g.set_entry_point("retrieve")
     g.add_edge("retrieve", "grade_documents")
-    g.add_conditional_edges(
-        "grade_documents", route_after_grade,
-        {"web_search": "web_search", "generate": "generate"},
-    )
-    g.add_edge("web_search", "generate")
-    g.add_conditional_edges(
-        "generate", route_after_generate,
-        {"useful": END, "not_grounded": "generate", "not_useful": "web_search"},
-    )
+
+    if web_enabled:
+        # agentic mode: weak evidence / unhelpful answer -> fall back to the web
+        g.add_node("web_search", web_search)
+        g.add_conditional_edges(
+            "grade_documents", route_after_grade,
+            {"web_search": "web_search", "generate": "generate"},
+        )
+        g.add_edge("web_search", "generate")
+        g.add_conditional_edges(
+            "generate", route_after_generate,
+            {"useful": END, "not_grounded": "generate", "not_useful": "web_search"},
+        )
+    else:
+        # document-only mode: answer from the documents or say "I don't know" — never the web
+        g.add_edge("grade_documents", "generate")
+        g.add_conditional_edges(
+            "generate", route_after_generate_docs_only,
+            {"useful": END, "not_grounded": "generate"},
+        )
     return g.compile()
