@@ -14,8 +14,16 @@ from langchain_text_splitters import RecursiveCharacterTextSplitter
 from . import config, providers
 
 
+_VECTORSTORE = None
+
+
 def get_vectorstore():
-    """Return a Qdrant-backed vector store, creating the collection if needed."""
+    """Return a Qdrant-backed vector store (cached — embedded mode allows only
+    one client per process, so ingest and chat must share the same instance)."""
+    global _VECTORSTORE
+    if _VECTORSTORE is not None:
+        return _VECTORSTORE
+
     from langchain_qdrant import QdrantVectorStore
     from qdrant_client import QdrantClient
     from qdrant_client.models import Distance, VectorParams
@@ -29,11 +37,12 @@ def get_vectorstore():
             config.QDRANT_COLLECTION,
             vectors_config=VectorParams(size=config.EMBED_DIM, distance=Distance.COSINE),
         )
-    return QdrantVectorStore(
+    _VECTORSTORE = QdrantVectorStore(
         client=client,
         collection_name=config.QDRANT_COLLECTION,
         embedding=providers.get_embeddings(),
     )
+    return _VECTORSTORE
 
 
 def _load_pdf(path: str, caption_images: bool = True) -> List[Document]:
